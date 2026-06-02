@@ -6,18 +6,20 @@ Antigravity uses `task.md` as its orchestration engine. When building a Harness,
 
 ```markdown
 - `[ ]` **Phase 1: Domain Analysis**
-  - **Action**: Load Persona from `.agent/knowledge/analyst_persona.md`.
-  - **Task**: Analyze the user's initial request.
-  - **Output**: Write findings to `_workspace/01_analysis.md`.
+    - **Action:** Load Persona rules from `.agent/knowledge/analyst_persona.md`.
+    - **Task:** Analyze the user's initial request.
+    - **Output:** Write findings to `_workspace/01_analysis.md`.
+
 - `[ ]` **Phase 2: Architecture Planning**
-  - **Action**: Load Persona from `.agent/knowledge/architect_persona.md`.
-  - **Task**: Read `_workspace/01_analysis.md` and design the system.
-  - **Output**: Write design to `_workspace/02_architecture.md`.
+    - **Action:** Drop previous Persona, load new Persona from `.agent/knowledge/architect_persona.md`.
+    - **Task:** Read `_workspace/01_analysis.md` and design the system.
+    - **Output:** Write design to `_workspace/02_architecture.md`.
+
 - `[ ]` **Phase 3: Development & Quality Assurance**
-  - **Action**: Iterative Producer-Reviewer loop.
-  - `[ ]` Developer Persona: Read architecture, generate code.
-  - `[ ]` QA Persona: Review code against guidelines.
-  - `[ ]` Loop until QA Persona approves.
+    - **Action:** Iterative Producer-Reviewer loop.
+    - `[ ]` Developer Persona: Drop previous Persona, load Developer Persona. Read architecture, generate code.
+    - `[ ]` QA Persona: Drop previous Persona, load QA Persona. Review code against guidelines.
+    - `[ ]` Loop until QA Persona approves.
 ```
 
 ## Error Handling
