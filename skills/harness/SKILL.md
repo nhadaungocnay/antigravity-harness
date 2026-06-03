@@ -27,12 +27,17 @@ When the harness skill is triggered, first check the existing harness state.
    - **Expansion**: Existing harness needs new Personas/skills → Selectively run phases to add without destroying existing context.
    - **Maintenance**: Audit or sync existing harness.
 
-### Phase 1: Domain Analysis
+### Phase 1: Domain Analysis & Architecture Selection
 
 1. Understand the domain/project from the user's request.
 2. Identify core task types (generation, review, edit, analysis, etc.).
 3. Analyze project codebase — tech stack, data models, core modules.
-4. **Detect user proficiency** — Adjust communication tone based on context clues (e.g., don't use terms like "JSON schema" without explanation for beginners).
+4. **Detect user proficiency** — Adjust communication tone based on context clues.
+5. **Interactive Architecture Menu**: If the architectural pattern is not explicitly requested, you MUST pause and ask the user to select one:
+   - Ask: "Which architecture pattern do you want for this project?"
+   - Present options: [1. Pipeline, 2. Fan-out/Fan-in, 3. Producer-Reviewer, 4. Expert Pool, 5. Supervisor, 6. Hierarchical Delegation].
+   - Also ask: "Please provide a short description of your project."
+   - Halt execution and wait for the user's response before moving to Phase 2.
 
 ### Phase 2: Architecture Design (Hybrid Approach)
 
@@ -68,26 +73,28 @@ Before creating a new Persona, check existing files in `.agent/knowledge/` to pr
 Do not hardcode roles directly into prompts.
 
 Include essential sections in each Persona file:
-- Core Role
-- Working Principles
-- Input/Output Protocols
-- Error Handling
-- Handoff instructions for the next Persona in the sequence.
+Include exactly 5 essential sections in each Persona file:
+1. **Role**: The core identity and purpose of this Persona.
+2. **Constraints**: Critical rules and limitations (e.g., "NEVER write to DB directly").
+3. **Context Scope**: The specific directories/files this Persona is allowed to read/write.
+4. **Available Skills**: The explicit list of skills this Persona is permitted to invoke.
+5. **Output Format**: The exact format and location of the deliverables this Persona must produce.
+
+**For Fan-out/Fan-in architecture:**
+- Automatically generate `supervisor_persona.md`: Defines the Supervisor role. Supervisor must only spawn subagents and wait for them to finish, without executing the tasks themselves.
+- Automatically generate `architect_persona.md`: Defines the Fan-in Aggregator role. Architect reads multiple outputs from subagents and synthesizes a final report or feature.
 
 ### Phase 4: Skill Generation
 
-Create custom skills in `.agent/skills/{name}/SKILL.md`.
+Create custom skills in `.agent/skills/{skill_name}/`.
 
 #### 4-1. Skill Structure
 
-```
-skill-name/
-├── SKILL.md (Required)
-│   ├── YAML frontmatter (name, description)
-│   └── Markdown body
-└── Bundled Resources (Optional)
-    ├── scripts/    - Deterministic executable scripts
-    └── references/ - Conditionally loaded docs
+Each generated skill MUST contain exactly 2 core files:
+```text
+{skill_name}/
+├── {skill_name}_manifest.md (Required) - Explains how the AI should use the skill, its parameters, and when to trigger it.
+└── {skill_name}.py (or .js/.sh) (Required) - The executable script containing the actual logic.
 ```
 
 #### 4-2. Description Writing — Be "Pushy"
@@ -115,6 +122,18 @@ If using **Single-Agent Role Switching**, the `task.md` should have explicit che
 ```markdown
 - [ ] Phase 1: Load `.agent/knowledge/analyst_persona.md` and perform domain analysis.
 - [ ] Phase 2: Load `.agent/knowledge/builder_persona.md` and write the code based on Phase 1 output.
+```
+
+If using **Explicit Subagents (Fan-out/Fan-in)**, the `task.md` must contain explicit `spawn` commands and a Barrier:
+```markdown
+- [ ] **Phase 1: Fan-out (Parallel Execution)**
+    - **Action:** Act as Supervisor. Explicitly spawn subagents to execute tasks independently.
+    - **Subagent 1:** [Task 1] -> Output: `_workspace/output_1.md`
+    - **Subagent 2:** [Task 2] -> Output: `_workspace/output_2.md`
+    - **Barrier:** Do NOT proceed until all subagents generate their output files.
+- [ ] **Phase 2: Fan-in (Aggregation)**
+    - **Action:** Drop Persona, load `.agent/knowledge/architect_persona.md`.
+    - **Task:** Read all output files from `_workspace/` and synthesize the final result.
 ```
 
 #### 5-2. Register Pointers in `GEMINI.md`
