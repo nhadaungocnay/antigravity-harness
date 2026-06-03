@@ -58,6 +58,18 @@ Phase 6: Validation & Testing
 agy install harness
 ```
 
+## Template Catalog (Web UI)
+
+Harness provides a **Web Catalog** displaying 100 production-ready agent teams.
+1. Open the [Harness Catalog UI](docs/index.html) in your browser.
+2. Browse domains (Content, DevOps, Data, Legal, etc.).
+3. Click any template to copy the pull command.
+4. Run the command in your Antigravity CLI:
+   ```shell
+   /harness pull 01-youtube-production
+   ```
+The Harness will automatically download and convert the template to the Antigravity L3 Meta-Factory format (`.agent/knowledge/`).
+
 ### Direct Installation
 
 Copy the harness skills directory to your agent's skills folder:

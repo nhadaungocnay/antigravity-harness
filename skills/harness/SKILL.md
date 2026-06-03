@@ -1,6 +1,6 @@
 ---
 name: harness
-description: "Builds a harness. A meta-skill that defines Personas (Knowledge Items) and generates the skills they will use. Use this when (1) requested to 'build a harness', (2) 'design an architecture', (3) building an automated system for a new domain/project, (4) expanding an existing harness, (5) requested to 'audit harness' or 'sync agents'."
+description: "Builds a harness. A meta-skill that defines Personas (Knowledge Items) and generates the skills they will use. Use this when (1) requested to 'build a harness', (2) 'design an architecture', (3) building an automated system for a new domain/project, (4) expanding an existing harness, (5) requested to 'audit harness' or 'sync agents', (6) requested to 'pull' a template from harness-100 catalog."
 ---
 
 # Harness — Architecture & Skill Generator
@@ -17,9 +17,16 @@ A meta-skill that configures a harness for a domain/project, defines the Persona
 
 ## Workflow
 
-### Phase 0: State Audit
+### Phase 0: Template Puller (Catalog Integration)
 
-When the harness skill is triggered, first check the existing harness state.
+If the user's request starts with `pull <template-id>` (e.g., `pull 01-youtube-production`):
+1. Immediately run the `pull_template.sh` script located in `skills/harness/` with the given ID.
+   - Example: `bash ~/.agent/skills/harness/pull_template.sh 01-youtube-production` (or local path if running locally).
+2. Report success to the user and halt further execution. Do not generate a new harness.
+
+### Phase 1: State Audit
+
+When the harness skill is triggered for generation, first check the existing harness state.
 
 1. Read `.agent/knowledge/`, `.agent/skills/`, and `task.md`/`GEMINI.md`.
 2. Branch execution mode based on the state:
@@ -27,7 +34,7 @@ When the harness skill is triggered, first check the existing harness state.
    - **Expansion**: Existing harness needs new Personas/skills → Selectively run phases to add without destroying existing context.
    - **Maintenance**: Audit or sync existing harness.
 
-### Phase 1: Domain Analysis & Architecture Selection
+### Phase 2: Domain Analysis & Architecture Selection
 
 1. Understand the domain/project from the user's request.
 2. Identify core task types (generation, review, edit, analysis, etc.).
@@ -37,11 +44,11 @@ When the harness skill is triggered, first check the existing harness state.
    - Ask: "Which architecture pattern do you want for this project?"
    - Present options: [1. Pipeline, 2. Fan-out/Fan-in, 3. Producer-Reviewer, 4. Expert Pool, 5. Supervisor, 6. Hierarchical Delegation].
    - Also ask: "Please provide a short description of your project."
-   - Halt execution and wait for the user's response before moving to Phase 2.
+   - Halt execution and wait for the user's response before moving to Phase 3.
 
-### Phase 2: Architecture Design (Hybrid Approach)
+### Phase 3: Architecture Design (Hybrid Approach)
 
-#### 2-1. Select Execution Mode
+#### 3-1. Select Execution Mode
 
 **Single-Agent Role Switching is the primary default.** 
 
@@ -50,7 +57,7 @@ When the harness skill is triggered, first check the existing harness state.
 | **Single-Agent Role Switching** (Default) | Sequential dependent tasks (Pipeline, Producer-Reviewer). Context is shared inherently because it's the same agent switching Personas. | Generates a detailed `task.md` orchestrating when to load which `.agent/knowledge/` Persona. |
 | **Explicit Subagents** (Alternative) | Parallel independent tasks (Fan-out/Fan-in) where subagents can run asynchronously without sharing intermediate state. | The Main Agent acts as a Supervisor and uses subagent tools to delegate. |
 
-#### 2-2. Select Architecture Pattern
+#### 3-2. Select Architecture Pattern
 
 1. Decompose the task into specialized domains.
 2. Choose a team structure:
@@ -61,13 +68,13 @@ When the harness skill is triggered, first check the existing harness state.
    - **Supervisor**: Central agent with dynamic task distribution (Subagents).
    - **Hierarchical Delegation**: Top-down recursive delegation.
 
-### Phase 3: Persona Knowledge Generation
+### Phase 4: Persona Knowledge Generation
 
-#### 3-0. Duplicate Check
+#### 4-0. Duplicate Check
 
 Before creating a new Persona, check existing files in `.agent/knowledge/` to prevent overlap.
 
-#### 3-1. Generate Persona Definitions
+#### 4-1. Generate Persona Definitions
 
 **Every Persona MUST be defined as a Knowledge Item in `.agent/knowledge/{name}_persona.md`.**
 Do not hardcode roles directly into prompts.
@@ -84,11 +91,11 @@ Include exactly 5 essential sections in each Persona file:
 - Automatically generate `supervisor_persona.md`: Defines the Supervisor role. Supervisor must only spawn subagents and wait for them to finish, without executing the tasks themselves.
 - Automatically generate `architect_persona.md`: Defines the Fan-in Aggregator role. Architect reads multiple outputs from subagents and synthesizes a final report or feature.
 
-### Phase 4: Skill Generation
+### Phase 5: Skill Generation
 
 Create custom skills in `.agent/skills/{skill_name}/`.
 
-#### 4-1. Skill Structure
+#### 5-1. Skill Structure
 
 Each generated skill MUST contain exactly 2 core files:
 ```text
@@ -97,25 +104,25 @@ Each generated skill MUST contain exactly 2 core files:
 └── {skill_name}.py (or .js/.sh) (Required) - The executable script containing the actual logic.
 ```
 
-#### 4-2. Description Writing — Be "Pushy"
+#### 5-2. Description Writing — Be "Pushy"
 
 The description is the sole trigger mechanism. Write it aggressively so it triggers when needed.
 
 **Bad:** `"Skill for processing PDF docs"`
 **Good:** `"Performs all PDF operations including reading, text extraction, merging, rotating, and OCR. If the user mentions a .pdf file or requests a PDF output, YOU MUST USE THIS SKILL."`
 
-#### 4-3. Body Writing Principles
+#### 5-3. Body Writing Principles
 
 - **Explain Why:** Instead of just "ALWAYS/NEVER", explain the reasoning.
 - **Keep it Lean:** Aim for <500 lines. Use `references/` for extra weight.
 - **Generalize:** Don't overfit to specific examples.
 - **Use Imperative Tone:** Use commands ("Do this", "Run that").
 
-### Phase 5: Artifact Integration (task.md & GEMINI.md)
+### Phase 6: Artifact Integration (task.md & GEMINI.md)
 
 Unlike older systems, Antigravity orchestrates work via **Artifacts**. You must generate a `task.md` that serves as the state machine.
 
-#### 5-1. Generate `task.md`
+#### 6-1. Generate `task.md`
 
 Create an `implementation_plan.md` first for approval, then a `task.md` outlining the exact sequence of steps.
 If using **Single-Agent Role Switching**, the `task.md` should have explicit checkboxes instructing the agent:
@@ -136,7 +143,7 @@ If using **Explicit Subagents (Fan-out/Fan-in)**, the `task.md` must contain exp
     - **Task:** Read all output files from `_workspace/` and synthesize the final result.
 ```
 
-#### 5-2. Register Pointers in `GEMINI.md`
+#### 6-2. Register Pointers in `GEMINI.md`
 
 Update `GEMINI.md` (or the core KI) with a minimal pointer so the system knows this harness exists in future sessions.
 
@@ -146,7 +153,7 @@ Update `GEMINI.md` (or the core KI) with a minimal pointer so the system knows t
 **Trigger:** Use the `{orchestrator-skill-name}` when handling {Domain} tasks.
 ```
 
-### Phase 6: Validation & Testing
+### Phase 7: Validation & Testing
 
 Validate the generated harness.
 
@@ -154,7 +161,7 @@ Validate the generated harness.
 2. **Execution Mode Check**: Verify the `task.md` correctly outlines the Persona switching or subagent spawning.
 3. **Dry-Run**: Review the `task.md` to ensure data passes logically from one phase to the next (e.g., files saved in `_workspace/` by the Producer are read by the Reviewer).
 
-### Phase 7: Harness Evolution
+### Phase 8: Harness Evolution
 
 After execution, always ask the user for feedback.
 If the Reviewer Persona consistently finds the same flaws, update the Producer Persona's Knowledge Item to prevent them.
