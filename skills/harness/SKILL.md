@@ -17,12 +17,17 @@ A meta-skill that configures a harness for a domain/project, defines the Persona
 
 ## Workflow
 
-### Phase 0: Template Puller (Catalog Integration)
+### Phase 0: Template Puller & Project Setup (Catalog Integration)
 
-If the user's request starts with `pull <template-id>` (e.g., `pull 01-youtube-production`):
-1. Immediately run the `pull_template.sh` script located in `skills/harness/` with the given ID.
+1. **Pull Command**: If the user's request starts with `pull <template-id>` (e.g., `pull 01-youtube-production`):
+   - Immediately run the `pull_template.sh` script located in `skills/harness/` with the given ID.
    - Example: `bash ~/.agent/skills/harness/pull_template.sh 01-youtube-production` (or local path if running locally).
-2. Report success to the user and halt further execution. Do not generate a new harness.
+   - Report success to the user and halt further execution. Do not generate a new harness.
+
+2. **Project Kickoff via prompt.txt**: If the user's request mentions reading a file (e.g., `/harness read prompt.txt`):
+   - Read the contents of `prompt.txt`.
+   - Parse the `Domain`, `Scale`, and `Desc`.
+   - Analyze the Domain to find the closest match among the 100 templates. If a close match exists, ask the user if they want to pull it. Otherwise, proceed to generate a custom harness architecture based on the Scale and Desc provided.
 
 ### Phase 1: State Audit
 
