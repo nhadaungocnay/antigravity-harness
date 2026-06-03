@@ -79,6 +79,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-1">Nơi chứa (Đường dẫn)</label>
                         <input type="text" id="projPath" required placeholder="~/Projects" value="~/Projects" class="w-full bg-dark-bg border border-slate-700 rounded-lg py-2 px-4 text-white focus:outline-none focus:border-dark-accent">
+                        <p class="text-[11px] text-slate-500 mt-1 italic"><i class="fas fa-info-circle mr-1"></i>Trình duyệt web tĩnh không cho phép nút Browse lấy đường dẫn, bạn vui lòng Copy & Paste thư mục bằng tay.</p>
                     </div>
                 </div>
                 <div>
@@ -325,7 +326,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `kickoff_${slug}.${osType}`;
+            a.download = `open-project_${slug}.${osType}`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
