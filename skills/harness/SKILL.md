@@ -34,7 +34,8 @@ A meta-skill that configures a harness for a domain/project, defines the Persona
 When the harness skill is triggered for generation, first check the existing harness state.
 
 1. Read `.agent/knowledge/`, `.agent/skills/`, and `task.md`/`GEMINI.md`.
-2. Branch execution mode based on the state:
+2. **ALWAYS** ensure the `_workspace/` directory is created (e.g. `mkdir -p _workspace`) to store all execution outputs.
+3. Branch execution mode based on the state:
    - **New Setup**: No directories exist or they are empty → Run from Phase 1.
    - **Expansion**: Existing harness needs new Personas/skills → Selectively run phases to add without destroying existing context.
    - **Maintenance**: Audit or sync existing harness.
@@ -87,9 +88,9 @@ Do not hardcode roles directly into prompts.
 Include essential sections in each Persona file:
 Include exactly 5 essential sections in each Persona file:
 1. **Role**: The core identity and purpose of this Persona.
-2. **Constraints**: Critical rules and limitations (e.g., "NEVER write to DB directly").
+2. **Constraints**: Critical rules and limitations (e.g., "NEVER write to DB directly"). **MUST INCLUDE**: "TUYỆT ĐỐI KHÔNG IN KẾT QUẢ RA KHUNG CHAT. Bạn BẮT BUỘC phải sử dụng công cụ ghi file (write_to_file / bash) để lưu các **tài liệu trung gian, bản nháp, và báo cáo phân tích** vào bên trong thư mục `_workspace/`. **Riêng source code cuối cùng (final output) phải được ghi vào đúng cấu trúc thư mục của dự án (ví dụ: src/, lib/...) chứ KHÔNG để trong _workspace/.**"
 3. **Context Scope**: The specific directories/files this Persona is allowed to read/write.
-4. **Available Skills**: The explicit list of skills this Persona is permitted to invoke.
+4. **Available Skills**: The explicit list of skills this Persona is permitted to invoke. **MUST INCLUDE** `write_to_file` or `run_terminal_command`.
 5. **Output Format**: The exact format and location of the deliverables this Persona must produce.
 
 **For Fan-out/Fan-in architecture:**
@@ -130,6 +131,16 @@ Unlike older systems, Antigravity orchestrates work via **Artifacts**. You must 
 #### 6-1. Generate `task.md`
 
 Create an `implementation_plan.md` first for approval, then a `task.md` outlining the exact sequence of steps.
+
+**CRITICAL: Every `task.md` MUST start with a Workspace Context Check phase:**
+```markdown
+- `[ ]` **Phase 0: Workspace Context Check**
+    - **Action:** Check if `_workspace/` directory exists.
+    - **Condition 1:** If it exists AND user requested partial changes -> **Partial Rerun** (only spawn/load specific Agents to update).
+    - **Condition 2:** If it exists AND user provided new input -> **New Run** (rename existing `_workspace/` to `_workspace_prev/` to preserve it, then create new `_workspace/`).
+    - **Condition 3:** If it does NOT exist -> **Initial Run** (create `_workspace/`).
+```
+
 If using **Single-Agent Role Switching**, the `task.md` should have explicit checkboxes instructing the agent:
 ```markdown
 - [ ] Phase 1: Load `.agent/knowledge/analyst_persona.md` and perform domain analysis.

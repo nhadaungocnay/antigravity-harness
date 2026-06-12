@@ -2,6 +2,15 @@
 
 Antigravity uses `task.md` as its orchestration engine. When building a Harness, generate a `task.md` that guides the Main Agent through the execution using one of the 6 architectural patterns.
 
+## 0. Workspace Context Check (REQUIRED FOR ALL PATTERNS)
+```markdown
+- `[ ]` **Phase 0: Workspace Context Check**
+    - **Action:** Check if `_workspace/` directory exists.
+    - **Condition 1:** If exists AND user requested partial changes -> **Partial Rerun** (only invoke specific Agents).
+    - **Condition 2:** If exists AND user provided new input -> **New Run** (rename `_workspace/` to `_workspace_prev/`, then `mkdir _workspace`).
+    - **Condition 3:** If does NOT exist -> **Initial Run** (`mkdir -p _workspace`).
+```
+
 ## 1. Producer-Reviewer (Sequential Loop)
 ```markdown
 - `[ ]` **Phase 1: Generation**
